@@ -1,14 +1,43 @@
 {
   "name": "musicboxd",
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "API RESTful para avaliação de músicas e álbuns - MusicBoxd",
+  "main": "app.js",
   "private": true,
   "scripts": {
-    "start": "node ./bin/www"
+    "start": "node ./bin/www",
+    "dev": "nodemon ./bin/www",
+    "test": "jest --forceExit",
+    "test:watch": "jest --watch --watchAll",
+    "test:coverage": "jest --coverage"
   },
+  "keywords": [
+    "music",
+    "api",
+    "rest",
+    "express",
+    "mongodb"
+  ],
+  "author": "MusicBoxd Team",
+  "license": "MIT",
   "dependencies": {
-    "cookie-parser": "~1.4.4",
-    "debug": "~2.6.9",
-    "express": "~4.16.1",
-    "morgan": "~1.9.1"
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^4.18.2",
+    "express-validator": "^7.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.19.3",
+    "swagger-ui-express": "^5.0.0",
+    "yamljs": "^0.3.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.10",
+    "supertest": "^7.1.4"
+  },
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
   }
 }
