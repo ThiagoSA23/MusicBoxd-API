@@ -1,0 +1,593 @@
+openapi: 3.0.0
+info:
+  title: MusicBoxd API
+  description: API RESTful para avaliação de músicas e álbuns
+  version: 1.0.0
+  contact:
+    name: MusicBoxd Team
+    email: suporte@musicboxd.com
+
+servers:
+  - url: http://localhost:3000/api
+    description: Servidor Local
+  - url: https://musicboxd-api.herokuapp.com/api
+    description: Servidor de Produção
+
+tags:
+  - name: Autenticação
+    description: Endpoints de registro e login
+  - name: Álbuns
+    description: CRUD de álbuns musicais
+  - name: Músicas
+    description: CRUD de músicas individuais
+
+paths:
+  /auth/register:
+    post:
+      tags:
+        - Autenticação
+      summary: Registrar novo usuário
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - nome
+                - email
+                - senha
+              properties:
+                nome:
+                  type: string
+                  example: João Silva
+                  minLength: 2
+                email:
+                  type: string
+                  format: email
+                  example: joao@email.com
+                senha:
+                  type: string
+                  example: senha123456
+                  minLength: 6
+      responses:
+        201:
+          description: Usuário registrado com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/UserResponse'
+        400:
+          description: Email já existe ou dados inválidos
+        500:
+          description: Erro interno do servidor
+
+  /auth/login:
+    post:
+      tags:
+        - Autenticação
+      summary: Fazer login e obter token JWT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - senha
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: joao@email.com
+                senha:
+                  type: string
+                  example: senha123456
+      responses:
+        200:
+          description: Login realizado com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/UserResponse'
+        401:
+          description: Email ou senha inválidos
+        500:
+          description: Erro interno do servidor
+
+  /albums:
+    get:
+      tags:
+        - Álbuns
+      summary: Listar todos os álbuns
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        200:
+          description: Lista de álbuns
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Album'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+
+    post:
+      tags:
+        - Álbuns
+      summary: Criar novo álbum
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlbumInput'
+      responses:
+        201:
+          description: Álbum criado com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Album'
+        401:
+          description: Não autorizado
+        400:
+          description: Erro de validação
+        500:
+          description: Erro interno do servidor
+
+  /albums/{id}:
+    get:
+      tags:
+        - Álbuns
+      summary: Obter álbum por ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Detalhes do álbum
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Album'
+        404:
+          description: Álbum não encontrado
+
+    put:
+      tags:
+        - Álbuns
+      summary: Atualizar álbum
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlbumInput'
+      responses:
+        200:
+          description: Álbum atualizado com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Album'
+        401:
+          description: Não autorizado
+        403:
+          description: Acesso proibido (não é o dono)
+        404:
+          description: Álbum não encontrado
+
+    delete:
+      tags:
+        - Álbuns
+      summary: Deletar álbum
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Álbum deletado com sucesso
+        401:
+          description: Não autorizado
+        403:
+          description: Acesso proibido
+        404:
+          description: Álbum não encontrado
+
+  /musicas:
+    get:
+      tags:
+        - Músicas
+      summary: Listar todas as músicas
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: genero
+          in: query
+          schema:
+            type: string
+        - name: artista
+          in: query
+          schema:
+            type: string
+      responses:
+        200:
+          description: Lista de músicas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Music'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+
+    post:
+      tags:
+        - Músicas
+      summary: Criar nova música
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MusicInput'
+      responses:
+        201:
+          description: Música criada com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Music'
+        401:
+          description: Não autorizado
+        400:
+          description: Erro de validação
+        500:
+          description: Erro interno do servidor
+
+  /musicas/{id}:
+    get:
+      tags:
+        - Músicas
+      summary: Obter música por ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Detalhes da música
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Music'
+        404:
+          description: Música não encontrada
+
+    put:
+      tags:
+        - Músicas
+      summary: Atualizar música
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MusicInput'
+      responses:
+        200:
+          description: Música atualizada com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Music'
+        401:
+          description: Não autorizado
+        403:
+          description: Acesso proibido
+        404:
+          description: Música não encontrada
+
+    delete:
+      tags:
+        - Músicas
+      summary: Deletar música
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Música deletada com sucesso
+        401:
+          description: Não autorizado
+        403:
+          description: Acesso proibido
+        404:
+          description: Música não encontrada
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token JWT obtido ao fazer login
+
+  schemas:
+    User:
+      type: object
+      properties:
+        _id:
+          type: string
+        nome:
+          type: string
+        email:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        nome:
+          type: string
+        email:
+          type: string
+        token:
+          type: string
+
+    Album:
+      type: object
+      properties:
+        _id:
+          type: string
+        titulo:
+          type: string
+        artista:
+          type: string
+        genero:
+          type: string
+        dataLancamento:
+          type: string
+          format: date-time
+        descricao:
+          type: string
+        usuario:
+          $ref: '#/components/schemas/User'
+        avaliacao:
+          type: object
+          properties:
+            media:
+              type: number
+            total:
+              type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    AlbumInput:
+      type: object
+      required:
+        - titulo
+        - artista
+        - genero
+        - dataLancamento
+      properties:
+        titulo:
+          type: string
+        artista:
+          type: string
+        genero:
+          type: string
+          enum: [Rock, Pop, Jazz, Classical, Hip Hop, Electronic, R&B, Country, Metal, Reggae, Blues, Other]
+        dataLancamento:
+          type: string
+          format: date-time
+        descricao:
+          type: string
+
+    Music:
+      type: object
+      properties:
+        _id:
+          type: string
+        titulo:
+          type: string
+        artista:
+          type: string
+        genero:
+          type: string
+        duracao:
+          type: integer
+        dataLancamento:
+          type: string
+          format: date-time
+        album:
+          type: object
+          properties:
+            _id:
+              type: string
+            titulo:
+              type: string
+            artista:
+              type: string
+        usuario:
+          $ref: '#/components/schemas/User'
+        avaliacao:
+          type: object
+          properties:
+            media:
+              type: number
+            total:
+              type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    MusicInput:
+      type: object
+      required:
+        - titulo
+        - artista
+        - genero
+        - duracao
+        - dataLancamento
+      properties:
+        titulo:
+          type: string
+        artista:
+          type: string
+        genero:
+          type: string
+          enum: [Rock, Pop, Jazz, Classical, Hip Hop, Electronic, R&B, Country, Metal, Reggae, Blues, Other]
+        duracao:
+          type: integer
+        dataLancamento:
+          type: string
+          format: date-time
+        album:
+          type: string
+          description: ID do álbum (opcional)
+
+    Pagination:
+      type: object
+      properties:
+        total:
+          type: integer
+        page:
+          type: integer
+        pages:
+          type: integer
