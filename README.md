@@ -37,16 +37,14 @@ npm install
 3. Crie um arquivo .env na raiz com as variáveis necessárias (exemplo):
 
 env
-# MongoDB
-MONGO_URI=mongodb+srv://usuario:senha@seu-cluster.mongodb.net/musicboxd?retryWrites=true&w=majority
-
-# JWT
-JWT_SECRET=sua_chave_secreta_super_segura
-
-# App
-PORT=3000
-NODE_ENV=development
-
+# Variáveis de Ambiente .ENV
+MONGODB_USER=
+MONGODB_PASS
+MONGODB_HOST=
+MONGO_URI=
+JWT_SECRET=
+PORT=
+NODE_ENV=
 
 Observações:
 
